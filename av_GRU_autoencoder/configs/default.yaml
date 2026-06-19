@@ -1,0 +1,49 @@
+project_name: av_GRU_autoencoder
+seed: 42
+
+data:
+  # These should point to features produced by Stage 1 preprocessing/calibration.
+  # Expected inputs are windowed .npz files or a manifest CSV; see README.
+  dataset_dir: data/windowed_sequences
+  manifest_csv: data/window_manifest.csv
+  output_dir: outputs
+  val_fraction: 0.15
+  test_fraction: 0.15
+
+features:
+  motion_dim: 126       # Example: two hands * 21 landmarks * xyz = 126
+  audio_dim: 12         # Example audio features per window/frame
+  sequence_length: 60
+  use_audio_guidance: true
+  audio_quality_threshold: 0.35
+
+model:
+  hidden_dim: 128
+  latent_dim: 24
+  num_layers: 1
+  dropout: 0.10
+  bidirectional: true
+
+training:
+  batch_size: 64
+  epochs: 80
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  grad_clip: 1.0
+  patience: 12
+  device: auto
+
+loss:
+  motion_reconstruction_weight: 1.0
+  audio_prediction_weight: 0.35
+  latent_smoothness_weight: 0.02
+
+clustering:
+  method: hdbscan       # hdbscan or kmeans
+  min_cluster_size: 20
+  kmeans_clusters: 8
+  umap_neighbors: 25
+  umap_min_dist: 0.1
+
+runtime_export:
+  export_dir: outputs/export_for_runtime
