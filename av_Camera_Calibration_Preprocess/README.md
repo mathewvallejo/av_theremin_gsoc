@@ -174,6 +174,6 @@ python scripts/undistort_video.py \
 
 ## Notes
 
-- Chessboard calibration is sufficient for lens distortion and intrinsic calibration. For future stereo 3D reconstruction, ChArUco may be worth adding later.
+- Chessboard calibration is sufficient for lens distortion and intrinsic calibration. For future stereo 3D reconstruction, ArUco may be worth adding later.
 - All scripts use proper `main()` guards and are safe to import as modules without side effects.
 - See `docs/HOW_TO_USE_WITH_STAGE2.md` and `docs/HOW_TO_USE_WITH_STAGE3.md` for cross-stage wiring.
