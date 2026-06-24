@@ -123,6 +123,9 @@ cd /Volumes/MP_1/GSoC\ 2026/av_autoencoder/av_GRU_autoencoder
 pip install -r requirements.txt
 ```
 
+NOTE: If requirements.txt produces errors, use requirements_frozen.txt in its place for 
+ensured version compatibility across packages.
+
 If Conda is active:
 
 ```bash
