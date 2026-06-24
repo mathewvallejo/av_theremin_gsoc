@@ -264,9 +264,9 @@ to exist.
 
 ---
 
-# Motion-Only Validation Workflow
+# "Small Test" Validation Workflow
 
-Before integrating audio features, validate the pipeline using landmark motion only.
+Before integrating audio features, validate the pipeline using a small version of the model.
 
 The generated windows contain:
 
@@ -320,7 +320,7 @@ configs/full_av.yaml
 
 ---
 
-# Example Motion-Only Configuration
+# Example small_test Configuration
 
 ```yaml
 project_name: av_GRU_autoencoder
@@ -370,6 +370,7 @@ clustering:
 
 runtime_export:
   export_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs/export_for_runtime"
+
 ```
 
 ---
