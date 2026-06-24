@@ -1,72 +1,129 @@
 # av_GRU_autoencoder
 
-**Stage 2: audio-video guided GRU autoencoder for self-supervised gesture representation learning.**
+**Audio-video guided GRU autoencoder for self-supervised gesture representation learning and evaluation.**
 
-This stack trains a GRU autoencoder on windowed motion sequences from Stage 1, evaluates the learned latent space, clusters discovered gesture states, plots metrics, and exports a TorchScript encoder for Stage 3.
+This is the **Stage 2 training and evaluation stack** for a larger gesture-recognition system.
+
+Stage 1 converts raw video into calibrated MediaPipe landmark features. Stage 2 transforms those features into temporal training windows, trains an audio-guided GRU autoencoder, evaluates the learned latent space, clusters discovered gesture states, and exports a compact runtime package for Stage 3 real-time deployment.
 
 ---
 
-## What this stack does
+# What this Stack Does
 
 ```text
-Stage 1 preprocessing output
+Stage 1
+(raw video)
         ↓
-windowed MediaPipe motion features + audio features
+camera calibration
         ↓
-av_GRU_autoencoder training
+MediaPipe landmark extraction
+        ↓
+Feature_Data/*.csv
+        ↓
+
+Stage 2
+(build_windows.py)
+        ↓
+Window_Data/*.npz
+        ↓
+window_manifest.csv
+        ↓
+GRU autoencoder training
         ↓
 latent gesture embeddings
         ↓
-unsupervised clustering (HDBSCAN or k-means)
+unsupervised clustering
         ↓
-evaluation plots and reports
+evaluation plots/reports
         ↓
-TorchScript encoder export for Stage 3
+export_for_runtime/
 ```
 
-At runtime, the deployed system uses **video/MediaPipe only**. Audio guides training as a self-supervised auxiliary signal; it is not required at inference time.
-
----
-
-## Folder Structure
+At runtime, the deployed system can use:
 
 ```text
-av_GRU_autoencoder/
-├── README.md
-├── requirements.txt
-├── train.py
-├── embed.py
-├── cluster.py
-├── evaluate.py
-├── plot_metrics.py
-├── export_for_runtime.py
-├── configs/
-│   └── default.yaml
-├── docs/
-│   └── STAGE_OVERVIEW.md
-├── src/
-│   ├── config.py
-│   ├── dataset.py
-│   └── losses.py
-├── models/
-│   └── av_gru_autoencoder.py
-└── outputs/
+camera
+↓
+MediaPipe
+↓
+trained encoder
+↓
+gesture embedding
+↓
+cluster/state
+↓
+OSC
+↓
+Max/MSP
+```
+
+Audio is used during training as a self-supervised auxiliary signal and is not required during live performance.
+
+---
+
+# Recommended Project Layout
+
+```text
+/Volumes/MP_1/GSoC 2026/
+
+├── Feature_Data/
+│
+├── Window_Data/
+│
+├── Model_Outputs/
+│
+├── av_Camera_Calibration_Preprocess_v2/
+│
+├── av_GRU_autoencoder/
+│
+└── av_Gesture_OSC_Runtime/
+```
+
+Python virtual environments should remain on the internal drive:
+
+```text
+~/venvs/av_GRU_env
 ```
 
 ---
 
-## Install
+# Environment Setup
+
+Create:
 
 ```bash
 mkdir -p ~/venvs
 python -m venv ~/venvs/av_GRU_env
-source ~/venvs/av_GRU_env/bin/activate
+```
 
-cd /Volumes/MP_1/av_GRU_autoencoder
+Activate:
+
+```bash
+source ~/venvs/av_GRU_env/bin/activate
+```
+
+Verify:
+
+```bash
+which python
+which pip
+```
+
+Expected:
+
+```text
+/Users/<user>/venvs/av_GRU_env/bin/python
+/Users/<user>/venvs/av_GRU_env/bin/pip
+```
+
+Install requirements:
+
+```bash
+cd /Volumes/MP_1/GSoC\ 2026/av_autoencoder/av_GRU_autoencoder
 pip install -r requirements.txt
 ```
 
-If your terminal shows `(base)` alongside the venv, deactivate conda first:
+If Conda is active:
 
 ```bash
 conda deactivate
@@ -75,66 +132,251 @@ source ~/venvs/av_GRU_env/bin/activate
 
 ---
 
-## Expected Input Format
+# Stage 1 Output
 
-Stage 1 produces per-frame landmark CSVs. An intermediate windowing step (your responsibility) converts these into `.npz` files:
+Stage 1 produces landmark CSV files.
 
-```python
-motion        # shape: [sequence_length, motion_dim]
-audio         # shape: [audio_dim] or [sequence_length, audio_dim]
-audio_quality # scalar in [0, 1]
-```
+Example:
 
 ```text
-data/windowed_sequences/
-├── session01_cam01_win000001.npz
-├── session01_cam01_win000002.npz
+Feature_Data/
+├── ses01_cam01_vid01_landmarks.csv
+├── ses01_cam01_vid02_landmarks.csv
+├── ses01_cam02_vid01_landmarks.csv
 └── ...
 ```
 
-Optional manifest:
+Each row corresponds to one video frame.
+
+Typical landmark dimensionality:
 
 ```text
-data/window_manifest.csv
-```
+2 hands
+× 21 landmarks
+× 3 coordinates (x,y,z)
 
-Recommended columns: `path, source_video, camera_id, start_time, end_time, split`
-
-If `split` is included, use `train`, `val`, `test`. Otherwise the stack creates random splits.
-
----
-
-## Configure an Experiment
-
-Edit `configs/default.yaml`. Key settings:
-
-```yaml
-features:
-  motion_dim: 126       # 2 hands × 21 landmarks × 3 xyz = 126
-  audio_dim: 12
-  sequence_length: 60
-
-model:
-  hidden_dim: 128
-  latent_dim: 24
-```
-
-Create additional configs for experiments:
-
-```text
-configs/small_test.yaml
-configs/latent_16.yaml
-configs/gru_hidden_256.yaml
+= 126 motion features
 ```
 
 ---
 
-## Full Training and Evaluation Pipeline
+# Stage 2 Preprocessing (Required)
 
-### 1. Train
+Before training, landmark CSV files must be converted into fixed-length temporal windows.
+
+This is performed using:
+
+```text
+scripts/build_windows.py
+```
+
+Run:
 
 ```bash
-python train.py --config configs/default.yaml
+python scripts/build_windows.py \
+  --input-dir "/Volumes/MP_1/GSoC 2026/Feature_Data" \
+  --output-dir "/Volumes/MP_1/GSoC 2026/Window_Data" \
+  --sequence-length 60 \
+  --hop-length 30
+```
+
+Example:
+
+```text
+60 frame window
+30 frame hop
+```
+
+produces overlapping gesture sequences.
+
+---
+
+# Window Output Format
+
+Generated windows:
+
+```text
+Window_Data/
+├── ses01_cam01_vid01_win000000.npz
+├── ses01_cam01_vid01_win000001.npz
+├── ...
+```
+
+Each `.npz` contains:
+
+```python
+motion          # [sequence_length, motion_dim]
+audio           # audio features or placeholder vector
+audio_quality   # scalar [0,1]
+```
+
+Example:
+
+```text
+motion.shape = (60,126)
+audio.shape = (1,)
+audio_quality = 0.0
+```
+
+The placeholder format above is used during motion-only validation.
+
+---
+
+# Manifest Format
+
+`build_windows.py` automatically generates:
+
+```text
+Window_Data/window_manifest.csv
+```
+
+Required column:
+
+```text
+path
+```
+
+Additional columns:
+
+```text
+window_file
+source_csv
+source_video
+camera_id
+session_id
+start_frame
+end_frame
+start_time_ms
+end_time_ms
+split
+```
+
+The Stage 2 dataset loader requires:
+
+```text
+path
+```
+
+to exist.
+
+---
+
+# Motion-Only Validation Workflow
+
+Before integrating audio features, validate the pipeline using landmark motion only.
+
+The generated windows contain:
+
+```python
+motion
+audio            # placeholder vector
+audio_quality    # 0.0
+```
+
+This validates:
+
+```text
+window generation
+dataset loading
+GRU training
+embedding generation
+clustering
+runtime export
+```
+
+without requiring audio preprocessing.
+
+---
+
+# Configuration Files
+
+Available configs:
+
+```text
+configs/default.yaml
+    Full AV training
+
+configs/small_test.yaml
+    Motion-only validation
+
+configs/motion_only.yaml
+    Motion-only training
+
+configs/latent_16.yaml
+    Small latent space experiment
+
+configs/latent_32.yaml
+    Larger latent space experiment
+
+configs/gru_hidden_256.yaml
+    Larger recurrent model
+
+configs/full_av.yaml
+    Audio-guided training
+```
+
+---
+
+# Example Motion-Only Configuration
+
+```yaml
+project_name: av_GRU_autoencoder
+seed: 42
+
+data:
+  dataset_dir: "/Volumes/MP_1/GSoC 2026/Window_Data"
+  manifest_csv: "/Volumes/MP_1/GSoC 2026/Window_Data/window_manifest.csv"
+  output_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs"
+  val_fraction: 0.15
+  test_fraction: 0.15
+
+features:
+  motion_dim: 126
+  audio_dim: 1
+  sequence_length: 60
+  use_audio_guidance: false
+  audio_quality_threshold: 0.35
+
+model:
+  hidden_dim: 64
+  latent_dim: 16
+  num_layers: 1
+  dropout: 0.10
+  bidirectional: true
+
+training:
+  batch_size: 8
+  epochs: 5
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  grad_clip: 1.0
+  patience: 5
+  device: auto
+
+loss:
+  motion_reconstruction_weight: 1.0
+  audio_prediction_weight: 0.0
+  latent_smoothness_weight: 0.02
+
+clustering:
+  method: hdbscan
+  min_cluster_size: 10
+  kmeans_clusters: 8
+  umap_neighbors: 15
+  umap_min_dist: 0.1
+
+runtime_export:
+  export_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs/export_for_runtime"
+```
+
+---
+
+# Train
+
+Run:
+
+```bash
+python train.py --config configs/small_test.yaml
 ```
 
 Outputs:
@@ -143,10 +385,14 @@ Outputs:
 outputs/checkpoints/best_model.pt
 outputs/scalers/feature_scaler.joblib
 outputs/metrics/training_history.json
-outputs/train_split.csv  outputs/val_split.csv  outputs/test_split.csv
+outputs/train_split.csv
+outputs/val_split.csv
+outputs/test_split.csv
 ```
 
-### 2. Embed all windows
+---
+
+# Generate Embeddings
 
 ```bash
 python embed.py --config configs/default.yaml
@@ -159,24 +405,35 @@ outputs/embeddings/embeddings.npy
 outputs/embeddings/embeddings.csv
 ```
 
-### 3. Cluster the latent space
+---
+
+# Cluster the Latent Space
+
+HDBSCAN:
 
 ```bash
 python cluster.py --method hdbscan --min_cluster_size 20
-# or
+```
+
+KMeans:
+
+```bash
 python cluster.py --method kmeans --k 8
 ```
 
 Outputs:
 
 ```text
-outputs/clustering/cluster_assignments.csv
-outputs/clustering/cluster_model.joblib
-outputs/clustering/embedding_scaler.joblib
-outputs/clustering/umap_model.joblib
+outputs/clustering/
+├── cluster_assignments.csv
+├── cluster_model.joblib
+├── embedding_scaler.joblib
+└── umap_model.joblib
 ```
 
-### 4. Evaluate clusters
+---
+
+# Evaluate
 
 ```bash
 python evaluate.py
@@ -188,7 +445,9 @@ Outputs:
 outputs/reports/evaluation_report.json
 ```
 
-### 5. Plot metrics
+---
+
+# Plot Metrics
 
 ```bash
 python plot_metrics.py
@@ -202,82 +461,210 @@ outputs/plots/embedding_umap_clusters.png
 outputs/plots/cluster_distribution.png
 ```
 
-### 6. Export for Stage 3
+---
+
+# Export Runtime Package
 
 ```bash
-python export_for_runtime.py --config configs/default.yaml
+python export_for_runtime.py
 ```
 
 Outputs:
 
 ```text
 outputs/export_for_runtime/
-├── encoder_scripted.pt          ← TorchScript encoder (not a raw state dict)
+├── av_gru_encoder.pt
 ├── feature_scaler.joblib
 ├── embedding_scaler.joblib
 ├── cluster_model.joblib
-├── cluster_names.json
-└── runtime_model_config.json
+└── cluster_names.json
 ```
 
-Copy the contents of `export_for_runtime/` into `av_Gesture_OSC_runtime/models/`.
+This folder is consumed by Stage 3.
 
 ---
 
-## Model Architecture
+# Model Architecture
 
 ```text
-motion sequence  [B, T, motion_dim]
+motion sequence
       ↓
-bidirectional GRU encoder
+GRU encoder
       ↓
-mean pool over time steps  [B, enc_out_dim]
-      ↓
-LayerNorm → Linear          [B, latent_dim]
-      ↓ z
+latent gesture vector
      / \
     /   \
-motion decoder    audio prediction head
+motion decoder   audio prediction head
 ```
 
-Training loss:
+Training objective:
 
 ```text
 motion reconstruction loss
-+ audio-quality-gated audio prediction loss
-+ latent smoothness penalty
++
+audio-quality-gated prediction loss
++
+latent smoothness regularization
+```
+
+Audio is not treated as a human label.
+
+Audio functions as a self-supervised training signal which encourages the latent space to organize gestures according to their acoustic consequences.
+
+---
+
+# Evaluation Philosophy
+
+This is an unsupervised learning system.
+
+Useful metrics include:
+
+* training reconstruction loss
+* validation reconstruction loss
+* audio prediction loss
+* silhouette score
+* Davies-Bouldin score
+* cluster size distribution
+* UMAP visualization quality
+* human review of sampled clips
+
+Human review remains important because discovered gesture states must ultimately be interpreted musically.
+
+---
+
+# Troubleshooting
+
+## TypeError: 'NoneType' object is not subscriptable
+
+Cause:
+
+```text
+Invalid YAML formatting
+or
+missing required configuration keys
+```
+
+Fix:
+
+```text
+Check indentation and verify all sections exist.
 ```
 
 ---
 
-## TorchScript Export
+## manifest_csv must include a path column
 
-`export_for_runtime.py` exports the `encode()` method as a TorchScript traced module (`encoder_scripted.pt`). This is important for correctness: it captures the exact computation graph — mean pooling over time and LayerNorm — so Stage 3 cannot accidentally diverge by redefining the architecture. Stage 3 loads it with `torch.jit.load()`.
+Cause:
 
----
+```text
+Old manifest generated by an earlier windowing script.
+```
 
-## Evaluation Philosophy
+Fix:
 
-Because this is unsupervised, evaluation is not simple accuracy. Useful metrics include:
-
-- Train/validation reconstruction loss
-- Audio prediction loss when audio quality is high
-- Silhouette score of latent clusters
-- Davies-Bouldin score
-- UMAP cluster separability
-- Cluster size distribution
-- Human review of clips sampled from clusters
-
-Human review remains important. The model discovers gesture states; humans decide whether those states are musically meaningful.
+```text
+Re-run build_windows.py.
+```
 
 ---
 
-## Notes for HPC Use
+## IsADirectoryError: [Errno 21] Is a directory: '.'
 
-Move training to the Digital Research Alliance of Canada (or similar) by changing paths in a dedicated config:
+Cause:
+
+```text
+manifest_csv was set to an empty string.
+```
+
+Fix:
+
+```text
+Point manifest_csv to Window_Data/window_manifest.csv
+```
+
+---
+
+## Could not build wheels for llvmlite
+
+Cause:
+
+```text
+Numba / llvmlite compatibility issue.
+```
+
+Fix:
+
+```text
+Upgrade pip, setuptools, wheel
+and install compatible versions.
+```
+
+---
+
+## NumPy 2.x / PyTorch Compatibility Warnings
+
+Cause:
+
+```text
+Some packages compiled against NumPy 1.x.
+```
+
+Fix:
+
+```text
+Use package versions specified in requirements.txt.
+```
+
+---
+
+# Relationship to the Full System
+
+```text
+01_av_Camera_Calibration_Preprocess_v2
+    calibration
+    undistortion
+    MediaPipe landmark extraction
+
+02_av_GRU_autoencoder
+    build_windows.py
+    train
+    evaluate
+    cluster
+    export runtime package
+
+03_av_Gesture_OSC_Runtime
+    live camera
+    MediaPipe
+    trained encoder
+    gesture state
+    OSC
+    Max/MSP
+```
+
+---
+
+# Future HPC Deployment
+
+This stack is designed so training can later be moved to:
+
+```text
+Digital Research Alliance of Canada
+or
+other HPC environments
+```
+
+by changing paths inside a config file.
+
+Example:
 
 ```bash
 python train.py --config configs/hpc.yaml
 ```
 
-The key exported artifact — `outputs/export_for_runtime/` — is the same regardless of where training runs.
+The primary artifact remains:
+
+```text
+outputs/export_for_runtime/
+```
+
+which is imported by the Stage 3 runtime.
