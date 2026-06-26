@@ -177,8 +177,8 @@ Run:
 
 ```bash
 python build_windows.py \
-  --input-dir "/Volumes/MP_1/GSoC 2026/Feature_Data" \
-  --output-dir "/Volumes/MP_1/GSoC 2026/Window_Data" \
+  --input-dir "/Volumes/MP_1/GSoC 2026/av_autoencoder/Feature_Data" \
+  --output-dir "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data" \
   --sequence-length 60 \
   --hop-length 30
 ```
