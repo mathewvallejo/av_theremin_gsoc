@@ -327,9 +327,9 @@ project_name: av_GRU_autoencoder
 seed: 42
 
 data:
-  dataset_dir: "/Volumes/MP_1/GSoC 2026/Window_Data"
-  manifest_csv: "/Volumes/MP_1/GSoC 2026/Window_Data/window_manifest.csv"
-  output_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs"
+  dataset_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data"
+  manifest_csv: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data/window_manifest.csv"
+  output_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Model_Outputs"
   val_fraction: 0.15
   test_fraction: 0.15
 
