@@ -155,7 +155,9 @@ python scripts/extract_landmarks_undistorted.py \
   --output "../Feature_Data/ses01_cam01_vid01_landmarks.csv"
 ```
 
-This reads the raw video, undistorts each frame in memory, runs MediaPipe, and writes landmark features — without creating a corrected `.mp4`.
+This reads the raw video ONE VIDEO AT A TIME, undistorts each frame in memory, runs MediaPipe, and writes landmark features — without creating a corrected `.mp4`.
+
+For folders containing multiple video files, use 'extract_landmarks_undistorted_group.py' to iterate through the videos.
 
 ---
 
