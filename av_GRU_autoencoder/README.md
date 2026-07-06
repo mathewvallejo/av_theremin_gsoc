@@ -4,7 +4,7 @@
 
 This is the **Stage 2 training and evaluation stack** for a larger gesture-recognition system.
 
-Stage 1 converts raw video into calibrated MediaPipe landmark features. Stage 2 transforms those features into temporal training windows, trains an audio-guided GRU autoencoder, evaluates the learned latent space, clusters discovered gesture states, and exports a compact runtime package for Stage 3 real-time deployment.
+Stage 1 (av_Camera_Calibration_Preprocess) converts raw video into calibrated MediaPipe landmark features. Stage 2 transforms those features into temporal training windows, trains an audio-guided GRU autoencoder, evaluates the learned latent space, clusters discovered gesture states, and exports a compact runtime package for Stage 3 real-time deployment.
 
 NOTE: All file path names must be converted to local user's filepath(s) to run Python scripts.
 
@@ -160,9 +160,11 @@ Typical landmark dimensionality:
 = 126 motion features
 ```
 
+This should be done before beginning Stage 2.
+
 ---
 
-# Stage 2 Preprocessing (Required)
+# Stage 2 Preprocessing (Begin here once Stage 1 is complete)
 
 Before training, landmark CSV files must be converted into fixed-length temporal windows.
 
