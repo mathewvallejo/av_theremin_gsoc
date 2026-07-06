@@ -6,7 +6,7 @@ This is the **Stage 2 training and evaluation stack** for a larger gesture-recog
 
 Stage 1 (av_Camera_Calibration_Preprocess) converts raw video into calibrated MediaPipe landmark features. Stage 2 transforms those features into temporal training windows, trains an audio-guided GRU autoencoder, evaluates the learned latent space, clusters discovered gesture states, and exports a compact runtime package for Stage 3 real-time deployment.
 
-NOTE: All file path names must be converted to local user's filepath(s) to run Python scripts.
+NOTE: All file path names must be converted to local user's file path(s) to run Python scripts.
 
 ---
 
