@@ -298,9 +298,6 @@ without requiring audio preprocessing.
 Available configs:
 
 ```text
-configs/default.yaml
-    Full AV training
-
 configs/small_test.yaml
     Quick pipeline validation 
 
