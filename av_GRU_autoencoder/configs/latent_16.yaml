@@ -1,0 +1,47 @@
+project_name: av_GRU_autoencoder
+seed: 42
+
+data:
+  dataset_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data"
+  manifest_csv: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data/window_manifest.csv"
+  output_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Model_Outputs/latent_16"
+  val_fraction: 0.15
+  test_fraction: 0.15
+
+features:
+  motion_dim: 126
+  audio_dim: 1
+  sequence_length: 60
+  use_audio_guidance: false
+  audio_quality_threshold: 0.35
+
+model:
+  hidden_dim: 128
+  latent_dim: 16
+  num_layers: 2
+  dropout: 0.1
+  bidirectional: true
+
+training:
+  batch_size: 16
+  epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  grad_clip: 1.0
+  patience: 12
+  device: auto
+
+loss:
+  motion_reconstruction_weight: 1.0
+  audio_prediction_weight: 0.0
+  latent_smoothness_weight: 0.02
+
+clustering:
+  method: hdbscan
+  min_cluster_size: 20
+  kmeans_clusters: 8
+  umap_neighbors: 25
+  umap_min_dist: 0.1
+
+runtime_export:
+  export_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Model_Outputs/latent_16/export_for_runtime"
