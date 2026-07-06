@@ -164,7 +164,8 @@ This should be done before beginning Stage 2.
 
 ---
 
-# Stage 2 Preprocessing (Begin here once Stage 1 is complete)
+# Stage 2 Preprocessing 
+## (Begin here once Stage 1 is complete)
 
 Before training, landmark CSV files must be converted into fixed-length temporal windows.
 
