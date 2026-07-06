@@ -424,7 +424,7 @@ python cluster.py --method hdbscan --min_cluster_size 20 --config configs/small_
 KMeans:
 
 ```bash
-python cluster.py --method kmeans --k 8
+python cluster.py --method kmeans --k 8 --config configs/small_test.yaml
 ```
 
 Outputs:
