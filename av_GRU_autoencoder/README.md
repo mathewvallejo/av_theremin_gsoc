@@ -6,6 +6,8 @@ This is the **Stage 2 training and evaluation stack** for a larger gesture-recog
 
 Stage 1 converts raw video into calibrated MediaPipe landmark features. Stage 2 transforms those features into temporal training windows, trains an audio-guided GRU autoencoder, evaluates the learned latent space, clusters discovered gesture states, and exports a compact runtime package for Stage 3 real-time deployment.
 
+NOTE: All file path names must be converted to local user's filepath(s) to run Python scripts.
+
 ---
 
 # What this Stack Does
@@ -119,7 +121,7 @@ Expected:
 Install requirements:
 
 ```bash
-cd /Volumes/MP_1/GSoC\ 2026/av_autoencoder/av_GRU_autoencoder
+cd /Volumes/MP_1/GSoC_2026/av_autoencoder/av_GRU_autoencoder
 pip install -r requirements.txt
 ```
 
