@@ -314,7 +314,7 @@ configs/gru_hidden_256.yaml
     Larger recurrent model
 
 configs/full_av.yaml
-    Audio-guided training
+    Full model w/ audio-guided training
 ```
 
 ---
