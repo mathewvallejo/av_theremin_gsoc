@@ -302,7 +302,7 @@ configs/default.yaml
     Full AV training
 
 configs/small_test.yaml
-    Motion-only validation
+    Quick pipeline validation 
 
 configs/motion_only.yaml
     Motion-only training
