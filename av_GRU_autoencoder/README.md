@@ -134,7 +134,7 @@ source ~/venvs/av_GRU_env/bin/activate
 
 ---
 
-# Stage 1 Output
+# Stage 1 Output (from av_Camera_Calibration_Preprocess)
 
 Stage 1 produces landmark CSV files.
 
