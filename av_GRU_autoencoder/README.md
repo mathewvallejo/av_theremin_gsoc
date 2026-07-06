@@ -266,9 +266,9 @@ to exist.
 
 ---
 
-# Motion-Only Validation Workflow
+# Small Test Validation Workflow
 
-Before integrating audio features, validate the pipeline using landmark motion only.
+Validate pipeline with a small version of the model.
 
 The generated windows contain:
 
@@ -322,16 +322,16 @@ configs/full_av.yaml
 
 ---
 
-# Example Motion-Only Configuration
+# Example Configuration: small_test.yaml
 
 ```yaml
 project_name: av_GRU_autoencoder
 seed: 42
 
 data:
-  dataset_dir: "/Volumes/MP_1/GSoC 2026/Window_Data"
-  manifest_csv: "/Volumes/MP_1/GSoC 2026/Window_Data/window_manifest.csv"
-  output_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs"
+  dataset_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data"
+  manifest_csv: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Window_Data/window_manifest.csv"
+  output_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Model_Outputs/small_test"
   val_fraction: 0.15
   test_fraction: 0.15
 
@@ -346,7 +346,7 @@ model:
   hidden_dim: 64
   latent_dim: 16
   num_layers: 1
-  dropout: 0.10
+  dropout: 0.1
   bidirectional: true
 
 training:
@@ -371,7 +371,8 @@ clustering:
   umap_min_dist: 0.1
 
 runtime_export:
-  export_dir: "/Volumes/MP_1/GSoC 2026/Model_Outputs/export_for_runtime"
+  export_dir: "/Volumes/MP_1/GSoC 2026/av_autoencoder/Model_Outputs/small_test/export_for_runtime"
+
 ```
 
 ---
@@ -400,7 +401,7 @@ outputs/test_split.csv
 # Generate Embeddings
 
 ```bash
-python embed.py --config configs/default.yaml
+python embed.py --config configs/small_test.yaml
 ```
 
 Outputs:
@@ -417,7 +418,7 @@ outputs/embeddings/embeddings.csv
 HDBSCAN:
 
 ```bash
-python cluster.py --method hdbscan --min_cluster_size 20
+python cluster.py --method hdbscan --min_cluster_size 20 --config configs/small_test.yaml
 ```
 
 KMeans:
@@ -441,7 +442,7 @@ outputs/clustering/
 # Evaluate
 
 ```bash
-python evaluate.py
+python evaluate.py --config configs/small_test.yaml
 ```
 
 Outputs:
