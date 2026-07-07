@@ -1,0 +1,23 @@
+{
+  "format_version": 1,
+  "model_type": "av_gru_autoencoder",
+  "features": {
+    "motion_dim": 126,
+    "feature_dim": 126,
+    "sequence_length": 60,
+    "audio_dim": 1,
+    "include_velocity": false,
+    "normalize_to_wrist": true,
+    "normalize_scale_landmark": 9
+  },
+  "model": {
+    "motion_dim": 126,
+    "input_dim": 126,
+    "audio_dim": 1,
+    "hidden_dim": 64,
+    "latent_dim": 16,
+    "num_layers": 1,
+    "dropout": 0.1,
+    "bidirectional": true
+  }
+}

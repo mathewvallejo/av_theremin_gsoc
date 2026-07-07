@@ -1,0 +1,8 @@
+mediapipe>=0.10.14
+opencv-python
+numpy
+torch
+joblib
+PyYAML
+python-osc
+scikit-learn
