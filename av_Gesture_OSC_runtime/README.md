@@ -132,6 +132,15 @@ osc:
 In Max/MSP, listen with `udpreceive 9000` and route messages such as `/av_gesture/gesture/cluster`.
 
 ---
+### OSC Test in Terminal
+
+```bash
+python runtime/osc_receive_test.py
+```
+
+A quick check of OSC functionality, ran with a second terminal window (Mac).
+
+---
 
 ## Run Live Camera Mode
 
