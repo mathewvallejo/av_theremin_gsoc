@@ -134,11 +134,19 @@ In Max/MSP, listen with `udpreceive 9000` and route messages such as `/av_gestur
 ---
 ### OSC Test in Terminal
 
+A quick check of OSC functionality. Requires two terminal windows. In terminal window 1, run:
+
 ```bash
 python runtime/osc_receive_test.py
 ```
 
-A quick check of OSC functionality, ran with a second terminal window (Mac).
+In terminal window 2, run:
+
+```bash
+python runtime/live_camera_to_osc.py --config configs/runtime_config.yaml --camera 0
+```
+
+The user should see values change in the terminal window 1 as hands enter the video frame.
 
 ---
 
