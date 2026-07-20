@@ -178,7 +178,7 @@ scripts/build_windows.py
 Run:
 
 ```bash
-python scripts/build_windows.py \
+python build_windows.py \
   --input-dir "/Volumes/MP_1/GSoC 2026/Feature_Data" \
   --output-dir "/Volumes/MP_1/GSoC 2026/Window_Data" \
   --sequence-length 60 \
