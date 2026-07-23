@@ -149,10 +149,10 @@ python scripts/make_camera_manifest.py \
 Place MediaPipe's hand model at `models/hand_landmarker.task`.
 
 ```bash
-python scripts/extract_landmarks_undistorted.py \
-  --video "../Video_Data/ses01_cam01_vid01.mp4" \
-  --camera-calibration outputs/calibration/cam01_intrinsics.npz \
-  --output "../Feature_Data/ses01_cam01_vid01_landmarks.csv"
+python -u scripts/extract_landmarks_undistorted_group.py \
+  --video-dir "../Video_Data" \
+  --camera-calibration "outputs/calibration/cam01_intrinsics.npz" \
+  --output-dir "../Feature_Data"
 ```
 
 This reads the raw video ONE VIDEO AT A TIME, undistorts each frame in memory, runs MediaPipe, and writes landmark features — without creating a corrected `.mp4`.
