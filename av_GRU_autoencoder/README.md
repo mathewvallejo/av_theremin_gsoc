@@ -453,7 +453,7 @@ outputs/reports/evaluation_report.json
 # Plot Metrics
 
 ```bash
-python plot_metrics.py
+python plot_metrics.py --config configs/small_test.yaml
 ```
 
 Outputs:
