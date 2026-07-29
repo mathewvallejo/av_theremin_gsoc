@@ -1,0 +1,2 @@
+camera_id,calibration_path,image_width,image_height,reprojection_error,usable_images,total_images
+cam01,outputs/calibration/cam01_intrinsics.npz,1920,1080,0.5774716290354032,45,45
