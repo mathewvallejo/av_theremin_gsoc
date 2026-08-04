@@ -1,6 +1,5 @@
 # AV-GRU Autoencoder Model and Flow
 
-Source package reviewed: `/Users/spaceboxcarbonite/Downloads/av_GRU_autoencoder`
 
 ## Purpose
 
