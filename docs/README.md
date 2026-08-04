@@ -3,7 +3,13 @@
 
 ## Purpose
 
-This Stage 2 package turns Stage 1 hand-landmark CSVs into fixed-length motion windows, trains a GRU autoencoder, converts each window into a compact latent gesture vector, clusters those latent vectors, and exports the trained artifacts for Stage 3 runtime use.
+This project is designed as the gesture recognition and input component for the GestureCap "Hypertheremin". It is a 3 stage design consisting of:
+
+    Stage 1.) av_Camera_Calibration_Preprocess 
+    Stage 2.) av_GRU_autoencoder
+    Stage 3.) av_Gesture_OSC_runtime
+    
+The Stage 2 package turns Stage 1 hand-landmark CSVs into fixed-length motion windows, trains a GRU autoencoder, converts each window into a compact latent gesture vector, clusters those latent vectors, and exports the trained artifacts for Stage 3 runtime use.
 
 The most important design point is that the encoder input is motion only. Audio is used as an optional auxiliary training target, gated by each window's `audio_quality` value. This means the deployed runtime can operate from camera/MediaPipe hand landmarks without needing live audio features.
 
