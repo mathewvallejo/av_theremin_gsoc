@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gesturecap"
+version = "0.1.0"
+description = "Lightweight live MediaPipe gesture enrollment and OSC runtime for Max/MSP."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "GestureCap Contributors" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+live = [
+  "mediapipe>=0.10",
+  "opencv-python>=4.8",
+  "python-osc>=1.8"
+]
+dev = []
+
+[project.scripts]
+gesturecap = "gesturecap.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gesturecap*"]
