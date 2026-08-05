@@ -1,0 +1,125 @@
+from pathlib import Path
+import json
+import numpy as np
+import pandas as pd
+import torch
+from torch.utils.data import Dataset
+from sklearn.model_selection import train_test_split
+
+
+class AVWindowDataset(Dataset):
+    """Dataset for pre-windowed motion/audio sequences.
+
+    Supported storage:
+    1. manifest CSV with columns: path, split(optional), source_video(optional), start_time(optional), end_time(optional)
+       Each .npz file must contain motion, audio, audio_quality.
+    2. dataset_dir containing .npz files with those keys.
+    """
+
+    def __init__(self, rows):
+        self.rows = rows.reset_index(drop=True)
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __getitem__(self, idx):
+        row = self.rows.iloc[idx]
+        data = np.load(row['path'])
+        motion = data['motion'].astype(np.float32)
+        audio = data['audio'].astype(np.float32)
+        audio_quality = np.array(data.get('audio_quality', 1.0), dtype=np.float32).reshape(1)
+        return {
+            'motion': torch.from_numpy(motion),
+            'audio': torch.from_numpy(audio),
+            'audio_quality': torch.from_numpy(audio_quality),
+            'index': idx,
+        }
+
+
+def discover_manifest(cfg):
+    data_cfg = cfg['data']
+    manifest = Path(data_cfg.get('manifest_csv', ''))
+    dataset_dir = Path(data_cfg.get('dataset_dir', ''))
+
+    if manifest.exists():
+        df = pd.read_csv(manifest)
+        if 'path' not in df.columns:
+            raise ValueError('manifest_csv must include a path column')
+        df['path'] = df['path'].apply(lambda p: str(Path(p)))
+        return df
+
+    files = sorted(dataset_dir.glob('*.npz'))
+    if not files:
+        raise FileNotFoundError(
+            f'No .npz windows found in {dataset_dir}. Run Stage 1 preprocessing/windowing first.'
+        )
+    return pd.DataFrame({'path': [str(p) for p in files]})
+
+
+def validate_window_contract(df, cfg):
+    if df.empty:
+        return
+
+    sample_path = df.iloc[0]["path"]
+    data = np.load(sample_path)
+    motion = data["motion"]
+    audio = data["audio"]
+    contract = {}
+    if "feature_contract" in data.files:
+        raw_contract = data["feature_contract"]
+        if hasattr(raw_contract, "item"):
+            raw_contract = raw_contract.item()
+        try:
+            contract = json.loads(str(raw_contract))
+        except json.JSONDecodeError:
+            contract = {}
+
+    expected_t = int(cfg["features"]["sequence_length"])
+    expected_motion_dim = int(cfg["features"]["motion_dim"])
+    expected_audio_dim = int(cfg["features"]["audio_dim"])
+    expected_audio_schema = cfg["features"].get("audio_schema")
+
+    errors = []
+    if motion.shape != (expected_t, expected_motion_dim):
+        errors.append(f"motion shape is {motion.shape}, expected {(expected_t, expected_motion_dim)}")
+    if audio.shape[-1] != expected_audio_dim:
+        errors.append(f"audio dim is {audio.shape[-1]}, expected {expected_audio_dim}")
+    if expected_audio_schema:
+        actual_audio_schema = contract.get("audio_schema")
+        if actual_audio_schema is None and "audio_schema" in data.files:
+            raw_schema = data["audio_schema"]
+            actual_audio_schema = raw_schema.item() if hasattr(raw_schema, "item") else str(raw_schema)
+        if actual_audio_schema != expected_audio_schema:
+            errors.append(
+                f"audio schema is {actual_audio_schema!r}, expected {expected_audio_schema!r}"
+            )
+
+        use_audio = bool(cfg["features"].get("use_audio_guidance", False))
+        audio_weight = float(cfg.get("loss", {}).get("audio_prediction_weight", 0.0))
+        if use_audio and audio_weight > 0.0:
+            threshold = float(cfg["features"].get("audio_quality_threshold", 0.0))
+            audio_quality = float(np.asarray(data.get("audio_quality", 0.0)).reshape(-1)[0])
+            if audio_quality < threshold:
+                errors.append(
+                    f"sample audio_quality is {audio_quality:.3f}, below threshold {threshold:.3f}"
+                )
+
+    if errors:
+        raise ValueError(
+            f"Window/config contract mismatch in {sample_path}:\n"
+            + "\n".join(f"- {msg}" for msg in errors)
+            + "\nRebuild windows with matching build_windows.py flags or use the matching config."
+        )
+
+
+def make_splits(df, val_fraction=0.15, test_fraction=0.15, seed=42):
+    if 'split' in df.columns:
+        return {
+            'train': df[df['split'] == 'train'].copy(),
+            'val': df[df['split'] == 'val'].copy(),
+            'test': df[df['split'] == 'test'].copy(),
+        }
+    train_val, test = train_test_split(df, test_size=test_fraction, random_state=seed, shuffle=True)
+    rel_val = val_fraction / max(1e-9, 1.0 - test_fraction)
+    train, val = train_test_split(train_val, test_size=rel_val, random_state=seed, shuffle=True)
+    return {'train': train, 'val': val, 'test': test}
